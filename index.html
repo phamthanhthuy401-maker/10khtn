@@ -140,7 +140,7 @@
           <p class="text-xs text-slate-500">Dữ liệu lưu trữ trực tuyến đám mây 24/24</p>
         </div>
         <div class="flex items-center space-x-2 flex-wrap gap-y-2">
-          <!-- Chỉ báo Live Data thay vì nút làm mới thủ công -->
+          <!-- Tính năng 3: Chỉ báo Live Data thay vì nút làm mới thủ công -->
           <div class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-xs font-bold flex items-center shadow-sm" title="Web tự động tải dữ liệu mới ngay khi có người nộp">
             <span class="relative flex h-2.5 w-2.5 mr-2">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -180,7 +180,7 @@
     </div>
   </main>
 
-  <!-- Modal Xem Chi Tiết -->
+  <!-- Tính năng 2: Modal Xem Chi Tiết -->
   <div id="detailModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex justify-center items-center hidden px-4 transition-opacity">
     <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
       <!-- Header Modal -->
@@ -225,7 +225,7 @@
 
   <script>
     // =========================================================================
-    // 🔥 CẤU HÌNH FIREBASE - MÃ CỦA BẠN ĐÃ ĐƯỢC TÍCH HỢP SẴN
+    // 🔥 CẤU HÌNH FIREBASE 
     // =========================================================================
     const firebaseConfig = {
       apiKey: "AIzaSyDwgFxiUiGD7sIToAQcycV2E9gfPWpNh5I",
@@ -285,7 +285,7 @@
       if (pass === '2026') {
         document.getElementById('adminLoginBox').classList.add('hidden');
         document.getElementById('adminDashboard').classList.remove('hidden');
-        startRealtimeUpdates(); // Khởi chạy Realtime
+        startRealtimeUpdates();
       } else {
         showToast('Mật khẩu không đúng!', 'error');
       }
@@ -331,30 +331,23 @@
       }
     }
 
-    // =========================================================================
-    // TÍNH NĂNG 3: REALTIME LISTENER - CHỈ TẢI DATA MỚI NGAY LẬP TỨC
-    // =========================================================================
     function startRealtimeUpdates() {
       const tbody = document.getElementById('submissionTableBody');
       tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang kết nối dữ liệu trực tiếp...</td></tr>';
       
-      // onSnapshot tự động kích hoạt ngay khi có thay đổi trên Database
       unsubscribe = db.collection("submissions").orderBy("createdAt", "desc")
         .onSnapshot((snapshot) => {
           snapshot.docChanges().forEach((change) => {
             if (change.type === "added") {
-              // Thêm dòng mới nộp vào bộ nhớ tạm
               if(!submissions.find(s => s.id === change.doc.id)) {
                 submissions.push({ id: change.doc.id, ...change.doc.data() });
               }
             }
             if (change.type === "removed") {
-              // Tính năng 1 bổ trợ: Lọc bỏ dòng đã bị xóa
               submissions = submissions.filter(s => s.id !== change.doc.id);
             }
           });
           
-          // Sắp xếp lại danh sách từ mới nhất -> cũ nhất
           submissions.sort((a, b) => b.createdAt - a.createdAt);
           renderTable();
         }, (error) => {
@@ -377,23 +370,20 @@
           <td class="p-3 text-slate-600">${sub.candidateId}</td>
           <td class="p-3 text-slate-500">${sub.createdAtString}</td>
           <td class="p-3 text-center flex justify-center space-x-4">
-            <!-- TÍNH NĂNG 2: NÚT XEM CHI TIẾT -->
+            <!-- Tính năng 2: Nút Xem -->
             <button onclick="viewDetails('${sub.id}')" class="text-indigo-600 hover:text-indigo-800 hover:scale-110 font-semibold text-xs transition" title="Xem nội dung danh sách trên Web"><i class="fa-solid fa-eye text-sm"></i> Xem</button>
-            <div class="w-px bg-slate-300"></div> <!-- Đường kẻ chia -->
+            <div class="w-px bg-slate-300"></div>
             <button onclick="downloadSingle('${sub.id}', 'word')" class="text-blue-600 hover:scale-110 font-semibold text-xs transition" title="Tải Word"><i class="fa-solid fa-file-word text-sm"></i></button>
             <button onclick="downloadSingle('${sub.id}', 'pdf')" class="text-red-600 hover:scale-110 font-semibold text-xs transition" title="Tải PDF"><i class="fa-solid fa-file-pdf text-sm"></i></button>
             <button onclick="downloadSingle('${sub.id}', 'excel')" class="text-emerald-600 hover:scale-110 font-semibold text-xs transition" title="Tải Excel"><i class="fa-solid fa-file-excel text-sm"></i></button>
-            <div class="w-px bg-slate-300"></div> <!-- Đường kẻ chia -->
-            <!-- TÍNH NĂNG 1: NÚT XÓA -->
+            <div class="w-px bg-slate-300"></div>
+            <!-- Tính năng 1: Nút Xóa -->
             <button onclick="deleteSubmission('${sub.id}')" class="text-slate-400 hover:text-red-600 hover:scale-110 font-semibold text-xs transition" title="Xóa danh sách này vĩnh viễn"><i class="fa-solid fa-trash text-sm"></i></button>
           </td>
         </tr>
       `).join('');
     }
 
-    // =========================================================================
-    // HÀM XỬ LÝ: XEM CHI TIẾT VÀ XÓA BẢN GHI
-    // =========================================================================
     function viewDetails(id) {
       const sub = submissions.find(s => s.id === id);
       if (!sub) return;
@@ -425,12 +415,11 @@
     }
 
     async function deleteSubmission(id) {
-      if(confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa danh sách ứng viên này?
-Hành động này không thể khôi phục.')) {
+      // Đã sửa lỗi ngắt dòng trong hàm confirm
+      if(confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa danh sách ứng viên này? \nHành động này không thể khôi phục.')) {
         try {
           await db.collection("submissions").doc(id).delete();
           showToast('Đã xóa dữ liệu thành công!', 'success');
-          // Không cần gọi renderTable() ở đây vì onSnapshot đã tự động lắng nghe và cập nhật giao diện
         } catch (error) {
           showToast('Lỗi! Không thể xóa bản ghi.', 'error');
         }
@@ -462,7 +451,6 @@ Hành động này không thể khôi phục.')) {
       }
     }
 
-    // Template chuẩn theo file "DS 10 KHTN.docx"
     function getPrintTemplate(sub) {
       let rowsHtml = '';
       sub.clients.forEach(c => {
