@@ -81,7 +81,7 @@
             <h2 class="font-bold text-slate-800 text-base md:text-lg uppercase">Danh Sách 10 Khách Hàng</h2>
           </div>
           <span class="text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded">
-            Bắt buộc điền đủ 10 dòng
+            Bắt buộc điền đủ tất cả các ô trong 10 dòng
           </span>
         </div>
 
@@ -92,10 +92,10 @@
                 <th class="p-2 border text-center w-10">STT</th>
                 <th class="p-2 border min-w-[130px]">Họ tên *</th>
                 <th class="p-2 border min-w-[110px]">Số điện thoại *</th>
-                <th class="p-2 border min-w-[110px]">Nghề nghiệp</th>
-                <th class="p-2 border min-w-[120px]">Địa chỉ</th>
-                <th class="p-2 border min-w-[90px] text-center">Thu nhập (Tr)</th>
-                <th class="p-2 border min-w-[100px]">Mối quan hệ</th>
+                <th class="p-2 border min-w-[110px]">Nghề nghiệp *</th>
+                <th class="p-2 border min-w-[120px]">Địa chỉ *</th>
+                <th class="p-2 border min-w-[90px] text-center">Thu nhập (Tr) *</th>
+                <th class="p-2 border min-w-[100px]">Mối quan hệ *</th>
               </tr>
             </thead>
             <tbody id="clientTableBody"></tbody>
@@ -140,8 +140,8 @@
           <p class="text-xs text-slate-500">Dữ liệu lưu trữ trực tuyến đám mây 24/24</p>
         </div>
         <div class="flex items-center space-x-2 flex-wrap gap-y-2">
-          <!-- Tính năng 3: Chỉ báo Live Data thay vì nút làm mới thủ công -->
-          <div class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-xs font-bold flex items-center shadow-sm" title="Web tự động tải dữ liệu mới ngay khi có người nộp">
+          <!-- Trạng thái Live Data -->
+          <div class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-xs font-bold flex items-center shadow-sm">
             <span class="relative flex h-2.5 w-2.5 mr-2">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
@@ -149,6 +149,9 @@
             Trực tiếp (Tự động cập nhật)
           </div>
           
+          <button onclick="deleteSelected()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-semibold shadow">
+            <i class="fa-solid fa-trash-can mr-1"></i> Xóa đã chọn
+          </button>
           <button onclick="exportSelected('word')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold shadow">
             <i class="fa-solid fa-file-word mr-1"></i> Tải Word
           </button>
@@ -180,10 +183,9 @@
     </div>
   </main>
 
-  <!-- Tính năng 2: Modal Xem Chi Tiết -->
+  <!-- Modal Xem Chi Tiết -->
   <div id="detailModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex justify-center items-center hidden px-4 transition-opacity">
     <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
-      <!-- Header Modal -->
       <div class="flex justify-between items-center p-4 border-b bg-slate-50 rounded-t-lg">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-file-lines text-brandBlue text-xl"></i>
@@ -193,7 +195,6 @@
           <i class="fa-solid fa-xmark text-2xl"></i>
         </button>
       </div>
-      <!-- Body Modal -->
       <div class="p-5 overflow-y-auto flex-1">
         <div class="mb-4 flex flex-wrap gap-6 text-sm font-semibold text-slate-700 bg-blue-50 p-3 rounded border border-blue-100">
           <div>Ứng viên: <span id="modalCandidateName" class="text-brandBlue font-bold text-base"></span></div>
@@ -216,7 +217,6 @@
           <tbody id="modalClientRows" class="divide-y divide-slate-200"></tbody>
         </table>
       </div>
-      <!-- Footer Modal -->
       <div class="p-4 border-t bg-slate-50 flex justify-end rounded-b-lg space-x-2">
         <button onclick="closeModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded font-bold text-sm transition shadow-sm">Đóng</button>
       </div>
@@ -241,7 +241,7 @@
     const db = firebase.firestore();
     
     let submissions = [];
-    let unsubscribe = null; // Dùng để kết nối realtime
+    let unsubscribe = null;
 
     window.onload = function() {
       const tbody = document.getElementById('clientTableBody');
@@ -253,10 +253,10 @@
             <td class="p-2 border text-center font-bold bg-slate-50 text-slate-500">${num}</td>
             <td class="p-1 border"><input type="text" required name="clientName_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
             <td class="p-1 border"><input type="tel" required name="clientPhone_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
-            <td class="p-1 border"><input type="text" name="clientJob_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
-            <td class="p-1 border"><input type="text" name="clientAddress_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
-            <td class="p-1 border"><input type="number" step="any" name="clientIncome_${i}" class="w-full p-1.5 border rounded outline-none text-xs text-center"></td>
-            <td class="p-1 border"><input type="text" name="clientRelation_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
+            <td class="p-1 border"><input type="text" required name="clientJob_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
+            <td class="p-1 border"><input type="text" required name="clientAddress_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
+            <td class="p-1 border"><input type="number" step="any" required name="clientIncome_${i}" class="w-full p-1.5 border rounded outline-none text-xs text-center"></td>
+            <td class="p-1 border"><input type="text" required name="clientRelation_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
           </tr>
         `;
       }
@@ -291,25 +291,40 @@
       }
     }
 
+    // 2. KIỂM TRA ĐẦY ĐỦ CÁC Ô TRONG 10 DÒNG KHÁCH HÀNG
     async function handleFormSubmit(e) {
       e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải lên hệ thống...';
 
       const clients = [];
       for (let i = 1; i <= 10; i++) {
         const num = i < 10 ? '0' + i : i;
+        const name = document.querySelector(`[name="clientName_${i}"]`).value.trim();
+        const phone = document.querySelector(`[name="clientPhone_${i}"]`).value.trim();
+        const job = document.querySelector(`[name="clientJob_${i}"]`).value.trim();
+        const address = document.querySelector(`[name="clientAddress_${i}"]`).value.trim();
+        const income = document.querySelector(`[name="clientIncome_${i}"]`).value.trim();
+        const relation = document.querySelector(`[name="clientRelation_${i}"]`).value.trim();
+
+        // Kiểm tra nếu bất kỳ ô nào bị trống
+        if (!name || !phone || !job || !address || !income || !relation) {
+          showToast(`Lỗi: Vui lòng điền đầy đủ thông tin ở dòng số ${i}!`, 'error');
+          return;
+        }
+
         clients.push({
           stt: num,
-          name: document.querySelector(`[name="clientName_${i}"]`).value.trim(),
-          phone: document.querySelector(`[name="clientPhone_${i}"]`).value.trim(),
-          job: document.querySelector(`[name="clientJob_${i}"]`).value.trim(),
-          address: document.querySelector(`[name="clientAddress_${i}"]`).value.trim(),
-          income: document.querySelector(`[name="clientIncome_${i}"]`).value.trim(),
-          relation: document.querySelector(`[name="clientRelation_${i}"]`).value.trim()
+          name: name,
+          phone: phone,
+          job: job,
+          address: address,
+          income: income,
+          relation: relation
         });
       }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải lên hệ thống...';
 
       const data = {
         candidateName: document.getElementById('candidateName').value.trim(),
@@ -370,14 +385,12 @@
           <td class="p-3 text-slate-600">${sub.candidateId}</td>
           <td class="p-3 text-slate-500">${sub.createdAtString}</td>
           <td class="p-3 text-center flex justify-center space-x-4">
-            <!-- Tính năng 2: Nút Xem -->
             <button onclick="viewDetails('${sub.id}')" class="text-indigo-600 hover:text-indigo-800 hover:scale-110 font-semibold text-xs transition" title="Xem nội dung danh sách trên Web"><i class="fa-solid fa-eye text-sm"></i> Xem</button>
             <div class="w-px bg-slate-300"></div>
             <button onclick="downloadSingle('${sub.id}', 'word')" class="text-blue-600 hover:scale-110 font-semibold text-xs transition" title="Tải Word"><i class="fa-solid fa-file-word text-sm"></i></button>
             <button onclick="downloadSingle('${sub.id}', 'pdf')" class="text-red-600 hover:scale-110 font-semibold text-xs transition" title="Tải PDF"><i class="fa-solid fa-file-pdf text-sm"></i></button>
             <button onclick="downloadSingle('${sub.id}', 'excel')" class="text-emerald-600 hover:scale-110 font-semibold text-xs transition" title="Tải Excel"><i class="fa-solid fa-file-excel text-sm"></i></button>
             <div class="w-px bg-slate-300"></div>
-            <!-- Tính năng 1: Nút Xóa -->
             <button onclick="deleteSubmission('${sub.id}')" class="text-slate-400 hover:text-red-600 hover:scale-110 font-semibold text-xs transition" title="Xóa danh sách này vĩnh viễn"><i class="fa-solid fa-trash text-sm"></i></button>
           </td>
         </tr>
@@ -415,13 +428,35 @@
     }
 
     async function deleteSubmission(id) {
-      // Đã sửa lỗi ngắt dòng trong hàm confirm
-      if(confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa danh sách ứng viên này? \nHành động này không thể khôi phục.')) {
+      if(confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa danh sách ứng viên này? 
+Hành động này không thể khôi phục.')) {
         try {
           await db.collection("submissions").doc(id).delete();
           showToast('Đã xóa dữ liệu thành công!', 'success');
         } catch (error) {
           showToast('Lỗi! Không thể xóa bản ghi.', 'error');
+        }
+      }
+    }
+
+    // 1. TÍNH NĂNG XÓA HÀNG LOẠT CÁC MỤC ĐƯỢC TÍCH CHỌN
+    async function deleteSelected() {
+      const checkedBoxes = Array.from(document.querySelectorAll('.sub-checkbox:checked'));
+      if (checkedBoxes.length === 0) {
+        showToast('Vui lòng chọn ít nhất 1 ứng viên cần xóa!', 'error');
+        return;
+      }
+
+      if(confirm(`CẢNH BÁO: Bạn có chắc chắn muốn xóa vĩnh viễn ${checkedBoxes.length} danh sách đã chọn không?`)) {
+        showToast(`Đang xóa ${checkedBoxes.length} bản ghi...`, 'success');
+        try {
+          for (let i = 0; i < checkedBoxes.length; i++) {
+            await db.collection("submissions").doc(checkedBoxes[i].value).delete();
+          }
+          showToast('Đã xóa các mục đã chọn thành công!', 'success');
+          document.getElementById('selectAllCheckbox').checked = false;
+        } catch (error) {
+          showToast('Lỗi khi xóa hàng loạt dữ liệu.', 'error');
         }
       }
     }
