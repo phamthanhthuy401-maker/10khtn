@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DANH SÁCH 10 KHÁCH HÀNG TIỀM NĂNG</title>
+  
+  <!-- Các thư viện hỗ trợ -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBlue: '#1864BC',
+            brandYellow: '#F7B718'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 relative">
+
+  <!-- Header -->
+  <header class="bg-brandBlue text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="bg-brandYellow text-brandBlue p-2 rounded-lg font-black text-xl leading-none">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <h1 class="text-lg md:text-xl font-bold tracking-wide uppercase">Danh Sách 10 Khách Hàng Tiềm Năng</h1>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button id="tabCandidateBtn" onclick="switchTab('candidate')" class="px-4 py-1.5 rounded font-semibold text-sm transition bg-brandYellow text-slate-900 shadow">
+          <i class="fa-solid fa-user-edit mr-1"></i> Dành Cho Ứng Viên
+        </button>
+        <button id="tabAdminBtn" onclick="switchTab('admin')" class="px-4 py-1.5 rounded font-semibold text-sm transition bg-blue-900 text-blue-100 hover:bg-blue-800">
+          <i class="fa-solid fa-lock mr-1"></i> Quản Trị Viên (Admin)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Thông báo trạng thái (Toast) -->
+  <div id="toast" class="fixed top-16 right-5 z-50 transform transition-all duration-300 translate-y-[-150%] opacity-0 bg-white border-l-4 shadow-xl rounded p-4 max-w-sm"></div>
+
+  <!-- TAB: ỨNG VIÊN -->
+  <main id="candidateView" class="max-w-7xl mx-auto p-4 md:p-6">
+    <form id="leadForm" onsubmit="handleFormSubmit(event)" class="space-y-6">
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
+        <div class="flex items-center space-x-2 mb-4 border-b pb-2">
+          <span class="text-brandYellow text-xl"><i class="fa-solid fa-id-card"></i></span>
+          <h2 class="font-bold text-slate-800 text-base md:text-lg uppercase">Thông Tin Ứng Viên</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Họ tên *</label>
+            <input type="text" id="candidateName" required placeholder="Ví dụ: Nguyễn Văn A" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-brandBlue outline-none text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">CMND/CCCD *</label>
+            <input type="text" id="candidateId" required placeholder="Ví dụ: 0123456789xx" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-brandBlue outline-none text-sm">
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-5 overflow-hidden">
+        <div class="flex justify-between items-center mb-4 border-b pb-2 flex-wrap gap-2">
+          <div class="flex items-center space-x-2">
+            <span class="text-brandYellow text-xl"><i class="fa-solid fa-list-ol"></i></span>
+            <h2 class="font-bold text-slate-800 text-base md:text-lg uppercase">Danh Sách 10 Khách Hàng</h2>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded">
+            Bắt buộc điền đủ 10 dòng
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border border-slate-200">
+            <thead class="bg-brandBlue text-white uppercase text-[11px]">
+              <tr>
+                <th class="p-2 border text-center w-10">STT</th>
+                <th class="p-2 border min-w-[130px]">Họ tên *</th>
+                <th class="p-2 border min-w-[110px]">Số điện thoại *</th>
+                <th class="p-2 border min-w-[110px]">Nghề nghiệp</th>
+                <th class="p-2 border min-w-[120px]">Địa chỉ</th>
+                <th class="p-2 border min-w-[90px] text-center">Thu nhập (Tr)</th>
+                <th class="p-2 border min-w-[100px]">Mối quan hệ</th>
+              </tr>
+            </thead>
+            <tbody id="clientTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <button type="submit" id="submitBtn" class="bg-brandYellow hover:bg-yellow-400 text-slate-950 font-bold px-8 py-2.5 rounded shadow text-sm transition flex items-center">
+            <i class="fa-solid fa-paper-plane mr-2"></i> Gửi Danh Sách Lên Hệ Thống
+          </button>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <!-- TAB: ADMIN -->
+  <main id="adminView" class="max-w-7xl mx-auto p-4 md:p-6 hidden">
+    <!-- Khung đăng nhập -->
+    <div id="adminLoginBox" class="max-w-md mx-auto bg-white rounded-lg shadow border p-6 my-12">
+      <div class="text-center mb-4">
+        <div class="w-12 h-12 bg-blue-50 text-brandBlue rounded-full flex items-center justify-center mx-auto text-xl mb-2">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h3 class="font-bold text-lg text-slate-800">Xác Thực Quản Trị Viên</h3>
+        <p class="text-xs text-slate-500">Vui lòng nhập mật khẩu để quản lý dữ liệu</p>
+      </div>
+      <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <input type="password" id="adminPassword" placeholder="Nhập mật khẩu" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-brandBlue outline-none text-sm text-center">
+        </div>
+        <button type="submit" class="w-full bg-brandBlue hover:bg-blue-700 text-white font-bold py-2 rounded text-sm transition">
+          Đăng Nhập
+        </button>
+      </form>
+    </div>
+
+    <!-- Màn hình quản lý sau khi đăng nhập -->
+    <div id="adminDashboard" class="hidden space-y-6">
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 flex flex-wrap justify-between items-center gap-3">
+        <div>
+          <h2 class="font-bold text-slate-800 uppercase text-sm md:text-base">Danh Sách Ứng Viên Đã Nộp</h2>
+          <p class="text-xs text-slate-500">Dữ liệu lưu trữ trực tuyến đám mây 24/24</p>
+        </div>
+        <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+          <!-- Chỉ báo Live Data thay vì nút làm mới thủ công -->
+          <div class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-xs font-bold flex items-center shadow-sm" title="Web tự động tải dữ liệu mới ngay khi có người nộp">
+            <span class="relative flex h-2.5 w-2.5 mr-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            Trực tiếp (Tự động cập nhật)
+          </div>
+          
+          <button onclick="exportSelected('word')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold shadow">
+            <i class="fa-solid fa-file-word mr-1"></i> Tải Word
+          </button>
+          <button onclick="exportSelected('pdf')" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-semibold shadow">
+            <i class="fa-solid fa-file-pdf mr-1"></i> Tải PDF
+          </button>
+          <button onclick="exportSelected('excel')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold shadow">
+            <i class="fa-solid fa-file-excel mr-1"></i> Tải Excel
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-100 border-b text-slate-600 font-bold uppercase text-[11px]">
+            <tr>
+              <th class="p-3 text-center w-10">
+                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="rounded">
+              </th>
+              <th class="p-3">Họ tên ứng viên</th>
+              <th class="p-3">CMND/CCCD</th>
+              <th class="p-3">Thời gian nộp</th>
+              <th class="p-3 text-center">Thao tác riêng lẻ</th>
+            </tr>
+          </thead>
+          <tbody id="submissionTableBody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Xem Chi Tiết -->
+  <div id="detailModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex justify-center items-center hidden px-4 transition-opacity">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+      <!-- Header Modal -->
+      <div class="flex justify-between items-center p-4 border-b bg-slate-50 rounded-t-lg">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-file-lines text-brandBlue text-xl"></i>
+          <h3 class="font-bold text-lg text-slate-800">Chi Tiết Danh Sách Đã Nộp</h3>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 transition px-2">
+          <i class="fa-solid fa-xmark text-2xl"></i>
+        </button>
+      </div>
+      <!-- Body Modal -->
+      <div class="p-5 overflow-y-auto flex-1">
+        <div class="mb-4 flex flex-wrap gap-6 text-sm font-semibold text-slate-700 bg-blue-50 p-3 rounded border border-blue-100">
+          <div>Ứng viên: <span id="modalCandidateName" class="text-brandBlue font-bold text-base"></span></div>
+          <div>CMND/CCCD: <span id="modalCandidateId" class="text-brandBlue font-bold text-base"></span></div>
+          <div>Ngày nộp: <span id="modalDate" class="text-slate-600 font-normal"></span></div>
+        </div>
+        
+        <table class="w-full text-left text-xs border border-slate-200">
+          <thead class="bg-brandBlue text-white uppercase text-[11px]">
+            <tr>
+              <th class="p-2 border text-center w-10">STT</th>
+              <th class="p-2 border">Họ tên</th>
+              <th class="p-2 border">Số điện thoại</th>
+              <th class="p-2 border">Nghề nghiệp</th>
+              <th class="p-2 border">Địa chỉ</th>
+              <th class="p-2 border text-center">Thu nhập (Tr)</th>
+              <th class="p-2 border">Mối quan hệ</th>
+            </tr>
+          </thead>
+          <tbody id="modalClientRows" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+      <!-- Footer Modal -->
+      <div class="p-4 border-t bg-slate-50 flex justify-end rounded-b-lg space-x-2">
+        <button onclick="closeModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded font-bold text-sm transition shadow-sm">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 🔥 CẤU HÌNH FIREBASE - MÃ CỦA BẠN ĐÃ ĐƯỢC TÍCH HỢP SẴN
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwgFxiUiGD7sIToAQcycV2E9gfPWpNh5I",
+      authDomain: "khtn-33180.firebaseapp.com",
+      projectId: "khtn-33180",
+      storageBucket: "khtn-33180.firebasestorage.app",
+      messagingSenderId: "1009508894822",
+      appId: "1:1009508894822:web:4813a9e2c938ed67d685a7",
+      measurementId: "G-01ZELMLP0J"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    let submissions = [];
+    let unsubscribe = null; // Dùng để kết nối realtime
+
+    window.onload = function() {
+      const tbody = document.getElementById('clientTableBody');
+      tbody.innerHTML = '';
+      for (let i = 1; i <= 10; i++) {
+        const num = i < 10 ? '0' + i : i;
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 transition border-b">
+            <td class="p-2 border text-center font-bold bg-slate-50 text-slate-500">${num}</td>
+            <td class="p-1 border"><input type="text" required name="clientName_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
+            <td class="p-1 border"><input type="tel" required name="clientPhone_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
+            <td class="p-1 border"><input type="text" name="clientJob_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
+            <td class="p-1 border"><input type="text" name="clientAddress_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
+            <td class="p-1 border"><input type="number" step="any" name="clientIncome_${i}" class="w-full p-1.5 border rounded outline-none text-xs text-center"></td>
+            <td class="p-1 border"><input type="text" name="clientRelation_${i}" class="w-full p-1.5 border rounded outline-none text-xs"></td>
+          </tr>
+        `;
+      }
+    };
+
+    function switchTab(tab) {
+      const cv = document.getElementById('candidateView');
+      const av = document.getElementById('adminView');
+      const tc = document.getElementById('tabCandidateBtn');
+      const ta = document.getElementById('tabAdminBtn');
+
+      if (tab === 'candidate') {
+        cv.classList.remove('hidden'); av.classList.add('hidden');
+        tc.className = "px-4 py-1.5 rounded font-semibold text-sm transition bg-brandYellow text-slate-900 shadow";
+        ta.className = "px-4 py-1.5 rounded font-semibold text-sm transition bg-blue-900 text-blue-100 hover:bg-blue-800";
+      } else {
+        cv.classList.add('hidden'); av.classList.remove('hidden');
+        ta.className = "px-4 py-1.5 rounded font-semibold text-sm transition bg-brandYellow text-slate-900 shadow";
+        tc.className = "px-4 py-1.5 rounded font-semibold text-sm transition bg-blue-900 text-blue-100 hover:bg-blue-800";
+      }
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const pass = document.getElementById('adminPassword').value;
+      if (pass === '2026') {
+        document.getElementById('adminLoginBox').classList.add('hidden');
+        document.getElementById('adminDashboard').classList.remove('hidden');
+        startRealtimeUpdates(); // Khởi chạy Realtime
+      } else {
+        showToast('Mật khẩu không đúng!', 'error');
+      }
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải lên hệ thống...';
+
+      const clients = [];
+      for (let i = 1; i <= 10; i++) {
+        const num = i < 10 ? '0' + i : i;
+        clients.push({
+          stt: num,
+          name: document.querySelector(`[name="clientName_${i}"]`).value.trim(),
+          phone: document.querySelector(`[name="clientPhone_${i}"]`).value.trim(),
+          job: document.querySelector(`[name="clientJob_${i}"]`).value.trim(),
+          address: document.querySelector(`[name="clientAddress_${i}"]`).value.trim(),
+          income: document.querySelector(`[name="clientIncome_${i}"]`).value.trim(),
+          relation: document.querySelector(`[name="clientRelation_${i}"]`).value.trim()
+        });
+      }
+
+      const data = {
+        candidateName: document.getElementById('candidateName').value.trim(),
+        candidateId: document.getElementById('candidateId').value.trim(),
+        createdAt: new Date().getTime(),
+        createdAtString: new Date().toLocaleString('vi-VN'),
+        clients: clients
+      };
+
+      try {
+        await db.collection("submissions").add(data);
+        showToast('Nộp danh sách 10 KH thành công!', 'success');
+        document.getElementById('leadForm').reset();
+      } catch (error) {
+        showToast('Lỗi gửi dữ liệu, vui lòng kiểm tra lại quyền truy cập.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Gửi Danh Sách Lên Hệ Thống';
+      }
+    }
+
+    // =========================================================================
+    // TÍNH NĂNG 3: REALTIME LISTENER - CHỈ TẢI DATA MỚI NGAY LẬP TỨC
+    // =========================================================================
+    function startRealtimeUpdates() {
+      const tbody = document.getElementById('submissionTableBody');
+      tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang kết nối dữ liệu trực tiếp...</td></tr>';
+      
+      // onSnapshot tự động kích hoạt ngay khi có thay đổi trên Database
+      unsubscribe = db.collection("submissions").orderBy("createdAt", "desc")
+        .onSnapshot((snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              // Thêm dòng mới nộp vào bộ nhớ tạm
+              if(!submissions.find(s => s.id === change.doc.id)) {
+                submissions.push({ id: change.doc.id, ...change.doc.data() });
+              }
+            }
+            if (change.type === "removed") {
+              // Tính năng 1 bổ trợ: Lọc bỏ dòng đã bị xóa
+              submissions = submissions.filter(s => s.id !== change.doc.id);
+            }
+          });
+          
+          // Sắp xếp lại danh sách từ mới nhất -> cũ nhất
+          submissions.sort((a, b) => b.createdAt - a.createdAt);
+          renderTable();
+        }, (error) => {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-500">Mất kết nối với Database.</td></tr>`;
+        });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('submissionTableBody');
+      if (submissions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">Chưa có ai nộp danh sách.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = submissions.map(sub => `
+        <tr class="hover:bg-slate-50 border-b transition">
+          <td class="p-3 text-center">
+            <input type="checkbox" value="${sub.id}" class="sub-checkbox rounded">
+          </td>
+          <td class="p-3 font-bold text-slate-700">${sub.candidateName}</td>
+          <td class="p-3 text-slate-600">${sub.candidateId}</td>
+          <td class="p-3 text-slate-500">${sub.createdAtString}</td>
+          <td class="p-3 text-center flex justify-center space-x-4">
+            <!-- TÍNH NĂNG 2: NÚT XEM CHI TIẾT -->
+            <button onclick="viewDetails('${sub.id}')" class="text-indigo-600 hover:text-indigo-800 hover:scale-110 font-semibold text-xs transition" title="Xem nội dung danh sách trên Web"><i class="fa-solid fa-eye text-sm"></i> Xem</button>
+            <div class="w-px bg-slate-300"></div> <!-- Đường kẻ chia -->
+            <button onclick="downloadSingle('${sub.id}', 'word')" class="text-blue-600 hover:scale-110 font-semibold text-xs transition" title="Tải Word"><i class="fa-solid fa-file-word text-sm"></i></button>
+            <button onclick="downloadSingle('${sub.id}', 'pdf')" class="text-red-600 hover:scale-110 font-semibold text-xs transition" title="Tải PDF"><i class="fa-solid fa-file-pdf text-sm"></i></button>
+            <button onclick="downloadSingle('${sub.id}', 'excel')" class="text-emerald-600 hover:scale-110 font-semibold text-xs transition" title="Tải Excel"><i class="fa-solid fa-file-excel text-sm"></i></button>
+            <div class="w-px bg-slate-300"></div> <!-- Đường kẻ chia -->
+            <!-- TÍNH NĂNG 1: NÚT XÓA -->
+            <button onclick="deleteSubmission('${sub.id}')" class="text-slate-400 hover:text-red-600 hover:scale-110 font-semibold text-xs transition" title="Xóa danh sách này vĩnh viễn"><i class="fa-solid fa-trash text-sm"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // =========================================================================
+    // HÀM XỬ LÝ: XEM CHI TIẾT VÀ XÓA BẢN GHI
+    // =========================================================================
+    function viewDetails(id) {
+      const sub = submissions.find(s => s.id === id);
+      if (!sub) return;
+      
+      document.getElementById('modalCandidateName').innerText = sub.candidateName;
+      document.getElementById('modalCandidateId').innerText = sub.candidateId;
+      document.getElementById('modalDate').innerText = sub.createdAtString;
+      
+      let rowsHtml = '';
+      sub.clients.forEach(c => {
+        rowsHtml += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2 border-b text-center font-semibold text-slate-500">${c.stt}</td>
+            <td class="p-2 border-b font-medium">${c.name}</td>
+            <td class="p-2 border-b text-center">${c.phone}</td>
+            <td class="p-2 border-b">${c.job}</td>
+            <td class="p-2 border-b">${c.address}</td>
+            <td class="p-2 border-b text-center font-semibold text-brandBlue">${c.income}</td>
+            <td class="p-2 border-b">${c.relation}</td>
+          </tr>
+        `;
+      });
+      document.getElementById('modalClientRows').innerHTML = rowsHtml;
+      document.getElementById('detailModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').classList.add('hidden');
+    }
+
+    async function deleteSubmission(id) {
+      if(confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa danh sách ứng viên này?
+Hành động này không thể khôi phục.')) {
+        try {
+          await db.collection("submissions").doc(id).delete();
+          showToast('Đã xóa dữ liệu thành công!', 'success');
+          // Không cần gọi renderTable() ở đây vì onSnapshot đã tự động lắng nghe và cập nhật giao diện
+        } catch (error) {
+          showToast('Lỗi! Không thể xóa bản ghi.', 'error');
+        }
+      }
+    }
+
+    function toggleSelectAll(master) {
+      document.querySelectorAll('.sub-checkbox').forEach(cb => cb.checked = master.checked);
+    }
+
+    function downloadSingle(id, type) {
+      const item = submissions.find(s => s.id === id);
+      if (!item) return;
+      if (type === 'word') generateWordDoc(item);
+      if (type === 'pdf') generatePDF(item);
+      if (type === 'excel') generateExcelSheet(item);
+    }
+
+    async function exportSelected(type) {
+      const checkedBoxes = Array.from(document.querySelectorAll('.sub-checkbox:checked'));
+      if (checkedBoxes.length === 0) {
+        showToast('Vui lòng chọn ít nhất 1 ứng viên!', 'error');
+        return;
+      }
+      showToast(`Đang tải ${checkedBoxes.length} tệp tin...`, 'success');
+      for (let i = 0; i < checkedBoxes.length; i++) {
+        downloadSingle(checkedBoxes[i].value, type);
+        await new Promise(r => setTimeout(r, 600));
+      }
+    }
+
+    // Template chuẩn theo file "DS 10 KHTN.docx"
+    function getPrintTemplate(sub) {
+      let rowsHtml = '';
+      sub.clients.forEach(c => {
+        rowsHtml += `
+          <tr>
+            <td style="border:1px solid #000; text-align:center; padding:6px;">${c.stt}</td>
+            <td style="border:1px solid #000; padding:6px;">${c.name}</td>
+            <td style="border:1px solid #000; text-align:center; padding:6px;">${c.phone}</td>
+            <td style="border:1px solid #000; padding:6px;">${c.job}</td>
+            <td style="border:1px solid #000; padding:6px;">${c.address}</td>
+            <td style="border:1px solid #000; text-align:center; padding:6px;">${c.income}</td>
+            <td style="border:1px solid #000; padding:6px;">${c.relation}</td>
+          </tr>
+        `;
+      });
+
+      return `
+        <div style="font-family:'Times New Roman', Times, serif; font-size:12pt; line-height:1.4; color:#000; padding:20px;">
+          <div style="text-align:center; font-weight:bold; font-size:16pt; margin-bottom:5px;">DANH SÁCH KHÁCH HÀNG TIỀM NĂNG</div>
+          <div style="text-align:center; font-style:italic; margin-bottom:15px;">(Điền đầy đủ 10 khách hàng)</div>
+          <table style="width:100%; margin-bottom:15px; font-weight:bold; border:none;">
+            <tr>
+              <td style="width:50%; border:none; padding-bottom:5px;">Ứng viên: ${sub.candidateName}</td>
+              <td style="width:50%; border:none; padding-bottom:5px;">CMND/CCCD: ${sub.candidateId}</td>
+            </tr>
+          </table>
+          <table style="width:100%; border-collapse:collapse; border:1px solid #000;">
+            <thead>
+              <tr style="font-weight:bold; text-align:center; background-color:#f2f2f2;">
+                <td style="border:1px solid #000; padding:8px; width:45px;">STT</td>
+                <td style="border:1px solid #000; padding:8px;">Họ tên</td>
+                <td style="border:1px solid #000; padding:8px; width:110px;">Số điện thoại</td>
+                <td style="border:1px solid #000; padding:8px;">Nghề nghiệp</td>
+                <td style="border:1px solid #000; padding:8px;">Địa chỉ</td>
+                <td style="border:1px solid #000; padding:8px; width:100px;">Thu nhập trung bình tháng<br>(Triệu đồng)</td>
+                <td style="border:1px solid #000; padding:8px;">Mối quan hệ</td>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function generateWordDoc(sub) {
+      const content = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>Danh sách KHTN</title></head>
+        <body>${getPrintTemplate(sub)}</body>
+        </html>
+      `;
+      const blob = new Blob(['﻿' + content], { type: 'application/msword' });
+      triggerDownload(blob, `DS_10_KHTN_${cleanFileName(sub.candidateName)}.doc`);
+    }
+
+    function generatePDF(sub) {
+      const opt = { margin: 10, filename: `DS_10_KHTN_${cleanFileName(sub.candidateName)}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
+      const element = document.createElement('div');
+      element.innerHTML = getPrintTemplate(sub);
+      html2pdf().set(opt).from(element).save();
+    }
+
+    function generateExcelSheet(sub) {
+      const data = [ ["DANH SÁCH KHÁCH HÀNG TIỀM NĂNG"], ["(Điền đầy đủ 10 khách hàng)"], [], [`Ứng viên: ${sub.candidateName}`, "", "", `CMND/CCCD: ${sub.candidateId}`], [], ["STT", "Họ tên", "Số điện thoại", "Nghề nghiệp", "Địa chỉ", "Thu nhập trung bình tháng (Triệu đồng)", "Mối quan hệ"] ];
+      sub.clients.forEach(c => { data.push([c.stt, c.name, c.phone, c.job, c.address, c.income, c.relation]); });
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "DS_KHTN");
+      XLSX.writeFile(wb, `DS_10_KHTN_${cleanFileName(sub.candidateName)}.xlsx`);
+    }
+
+    function cleanFileName(str) { return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]/g, '_'); }
+    function triggerDownload(blob, filename) { const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = filename; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+    function showToast(msg, type) { const t = document.getElementById('toast'); t.className = `fixed top-16 right-5 z-50 transform transition-all duration-300 translate-y-0 opacity-100 bg-white border-l-4 shadow-xl rounded p-4 max-w-sm ${type === 'error' ? 'border-red-500 text-red-700' : 'border-emerald-500 text-emerald-700'}`; t.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check'} mr-2"></i> ${msg}`; setTimeout(() => { t.classList.add('translate-y-[-150%]', 'opacity-0'); }, 3000); }
+  </script>
+</body>
+</html>
