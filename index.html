@@ -428,8 +428,7 @@
     }
 
     async function deleteSubmission(id) {
-      if(confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa danh sách ứng viên này? 
-Hành động này không thể khôi phục.')) {
+      if(confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa danh sách ứng viên này? \nHành động này không thể khôi phục.')) {
         try {
           await db.collection("submissions").doc(id).delete();
           showToast('Đã xóa dữ liệu thành công!', 'success');
@@ -539,7 +538,7 @@ Hành động này không thể khôi phục.')) {
         <body>${getPrintTemplate(sub)}</body>
         </html>
       `;
-      const blob = new Blob(['﻿' + content], { type: 'application/msword' });
+      const blob = new Blob(['\ufeff' + content], { type: 'application/msword' });
       triggerDownload(blob, `DS_10_KHTN_${cleanFileName(sub.candidateName)}.doc`);
     }
 
@@ -559,7 +558,7 @@ Hành động này không thể khôi phục.')) {
       XLSX.writeFile(wb, `DS_10_KHTN_${cleanFileName(sub.candidateName)}.xlsx`);
     }
 
-    function cleanFileName(str) { return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]/g, '_'); }
+    function cleanFileName(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '_'); }
     function triggerDownload(blob, filename) { const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = filename; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
     function showToast(msg, type) { const t = document.getElementById('toast'); t.className = `fixed top-16 right-5 z-50 transform transition-all duration-300 translate-y-0 opacity-100 bg-white border-l-4 shadow-xl rounded p-4 max-w-sm ${type === 'error' ? 'border-red-500 text-red-700' : 'border-emerald-500 text-emerald-700'}`; t.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check'} mr-2"></i> ${msg}`; setTimeout(() => { t.classList.add('translate-y-[-150%]', 'opacity-0'); }, 3000); }
   </script>
